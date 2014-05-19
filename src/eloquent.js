@@ -23,7 +23,7 @@ function Eloquent()
 	 *
 	 * @constructor
 	 */
-	this.EoS = function ()
+	this.EoS = function()
 	{
 		// Builder Vars
 		this.query = '';
@@ -44,101 +44,98 @@ function Eloquent()
 }
 
 /**
+ * Add a where clause to the Query
  *
- *
- * @param column
- * @param [operator="="]
- * @param value
- * @param [statement="AND"]
+ * @param {string} column
+ * @param {!string} [operator="="]
+ * @param {string|number} value
+ * @param {string} [statement="AND"]
  *
  * @return {Eloquent}
  */
-Eloquent.prototype.where = function (column, operator, value, statement)
+Eloquent.prototype.where = function(column, operator, value, statement)
 {
-	var _this = this;
-
-	if ( typeof statement === 'undefined' )
+	if(typeof statement === 'undefined')
 	{
 		statement = 'AND';
 	}
 
-	if ( !_this.whereStarted )
+	if(!this.whereStarted)
 	{
-		_this.whereQuery = 'WHERE ';
-		_this.whereStarted = true;
+		this.whereQuery = 'WHERE ';
+		this.whereStarted = true;
 	}
 	else
 	{
-		_this.whereQuery += ' ' + statement + ' ';
+		this.whereQuery += ' ' + statement + ' ';
 	}
 
-	_this.whereQuery += column + ' ' + operator + ' ?';
-	_this.values.push(value);
+	this.whereQuery += column + ' ' + operator + ' ?';
+	this.values.push(value);
 
 	return this;
 };
 
 /**
+ * Add an order by clause to the Query
  *
- * @param column
- * @param dir
+ * @param {string} column
+ * @param {string} [dir="ASC"]
+ *
  * @returns {Eloquent}
  */
-Eloquent.prototype.orderBy = function (column, dir)
+Eloquent.prototype.orderBy = function(column, dir)
 {
-	var _this = this;
-
-	if ( typeof dir === 'undefined' )
+	if(typeof dir === 'undefined')
 	{
 		dir = 'ASC';
 	}
 
-	if ( !_this.orderByStarted )
+	if(!this.orderByStarted)
 	{
-		_this.orderByQuery = 'ORDER BY ';
-		_this.orderByStarted = true;
+		this.orderByQuery = 'ORDER BY ';
+		this.orderByStarted = true;
 	}
 	else
 	{
-		_this.orderByQuery += ', ';
+		this.orderByQuery += ', ';
 	}
 
-	_this.orderByQuery += column + ' ' + dir;
+	this.orderByQuery += column + ' ' + dir;
 
 	return this;
 };
 
 /**
+ * Helps to see the result of the query
  *
- * @param columns
+ * @param {string[]} [columns=["*"]]
+ *
  * @returns {string}
  */
-Eloquent.prototype.select = function (columns)
+Eloquent.prototype.select = function(columns)
 {
-	var _this = this;
-
-	if ( typeof columns === 'undefined' || columns.length == 0 )
+	if(typeof columns === 'undefined' || columns.length == 0)
 	{
 		columns = ['*'];
 	}
 
-	_this.query = "SELECT " + columns.join(', ') + " FROM " + _this.table + " " + _this.whereQuery + " " + _this.orderByQuery;
-
-	return _this.query;
+	return "SELECT " + columns.join(', ') + " FROM " + this.table + " " + this.whereQuery + " " + this.orderByQuery;
 };
 
 /**
  * Retrieve the first record
  *
- * @param [columns=["*"]]
- * @param callback
+ * @param {string[]} [columns=["*"]]
+ * @param {function} callback
+ *
  * @returns {Eloquent}
  */
-Eloquent.prototype.first = function (columns, callback)
+Eloquent.prototype.first = function(columns, callback)
 {
 	var _this = this;
 
-	_this.db.transaction(function (tx)
+	this.db.transaction(function (tx)
 	{
 		tx.executeSql(_this.select(columns) + " LIMIT 1", _this.values, function (tx, res)
 			{
@@ -147,7 +144,7 @@ Eloquent.prototype.first = function (columns, callback)
 			_this._defaultErrorCallback);
 	});
 
-	_this.EoS();
+	this.EoS();
 
 	return this;
 };
@@ -155,65 +152,68 @@ Eloquent.prototype.first = function (columns, callback)
 /**
  * Retrieve all records
  *
- * @param [columns=["*"]]
- * @param callback
+ * @param {string[]} [columns=["*"]]
+ * @param {function} callback
+ *
  * @returns {Eloquent}
  */
-Eloquent.prototype.get = function (columns, callback)
+Eloquent.prototype.get = function(columns, callback)
 {
 	var _this = this;
 
-	_this.db.transaction(function (tx)
+	this.db.transaction(function (tx)
 	{
 		tx.executeSql(_this.select(columns), _this.values, function (tx, res)
 			{
-				callback(res.rows.item(0));
+				callback(res.rows);
 			},
 			_this._defaultErrorCallback);
 	});
 
-	_this.EoS();
+	this.EoS();
 
 	return this;
 };
 
 /**
- * Same as Get
+ * Retrieve all records, basicly the same as get
  *
- * @param columns
- * @param callback
+ * @param {string[]} [columns=["*"]]
+ * @param {function} callback
+ *
  * @returns {Eloquent}
  */
-Eloquent.prototype.all = function (columns, callback)
+Eloquent.prototype.all = function(columns, callback)
 {
 	return this.get(columns, callback);
 };
 
 /**
- * Retrieve the first record
+ * Delete the resulting record(s) from the table
  *
- * @param callback
- * @param [id=]
- * @param [column=]
+ * @param {function} callback
+ * @param {number} [id=]
+ * @param {string} [column=]
+ *
  * @returns {Eloquent}
  */
-Eloquent.prototype.delete = function (callback, id, column)
+Eloquent.prototype.delete = function(callback, id, column)
 {
 	var _this = this;
 
-	if ( typeof id !== 'undefined' )
+	if(typeof id !== 'undefined')
 	{
-		if ( typeof column === 'undefined' )
+		if(typeof column === 'undefined')
 		{
-			column = _this.primary_key;
+			column = this.primary_key;
 		}
 
-		_this.where(column, '-', id);
+		this.where(column, '-', id);
 	}
 
-	_this.query = "DELETE FROM " + _this.table + " " + _this.whereQuery;
+	this.query = "DELETE FROM " + this.table + " " + this.whereQuery;
 
-	_this.db.transaction(function (tx)
+	this.db.transaction(function (tx)
 	{
 		tx.executeSql(_this.query, _this.values, function (tx, res)
 			{
@@ -222,24 +222,24 @@ Eloquent.prototype.delete = function (callback, id, column)
 			_this._defaultErrorCallback);
 	});
 
-	_this.EoS();
+	this.EoS();
 
 	return this;
 };
 
 /**
+ * Creates the column and values part of the Insert Query
  *
- * @param {String} column
- * @param {String} value
+ * @param {string} column
+ * @param {(string|number)} value
+ *
  * @returns {Eloquent}
  */
-Eloquent.prototype.column = function (column, value)
+Eloquent.prototype.column = function(column, value)
 {
-	var _this = this;
-
-	_this.columns.push(column);
-	_this.parameters.push('?');
-	_this.values.push(value);
+	this.columns.push(column);
+	this.parameters.push('?');
+	this.values.push(value);
 
 	return this;
 };
@@ -247,53 +247,55 @@ Eloquent.prototype.column = function (column, value)
 /**
  * Add a new record
  *
- * @param callback
+ * @param {function} callback
+ *
  * @returns {Eloquent}
  */
-Eloquent.prototype.add = function (callback)
+Eloquent.prototype.add = function(callback)
 {
 	var _this = this;
 
-	_this.query = "INSERT INTO " + _this.table + " (" + _this.columns.join(', ') + ") VALUES (" + _this.parameters.join(', ') + ")";
+	this.query = "INSERT INTO " + this.table + " (" + this.columns.join(', ') + ") VALUES (" + this.parameters.join(', ') + ")";
 
-	_this.db.transaction(function (tx)
+	this.db.transaction(function (tx)
 	{
 		tx.executeSql(_this.query, _this.values, function (tx, res)
 			{
-				callback();
+				if(typeof res.rowsAffected !== 'undefined' && res.rowsAffected > 0)
+				{
+					callback();
+				}
 			},
 			_this._defaultErrorCallback);
 	});
 
-	_this.EoS();
+	this.EoS();
 
 	return this;
 };
 
 /**
+ * Creates the column = value part of the Update Query
  *
- *
- * @param column
- * @param value
+ * @param {string} column
+ * @param {(string|number)} value
  *
  * @return {Eloquent}
  */
-Eloquent.prototype.set = function (column, value)
+Eloquent.prototype.set = function(column, value)
 {
-	var _this = this;
-
-	if ( !_this.setStarted )
+	if(!this.setStarted)
 	{
-		_this.setQuery = 'SET ';
-		_this.setStarted = true;
+		this.setQuery = 'SET ';
+		this.setStarted = true;
 	}
 	else
 	{
-		_this.setQuery += ', ';
+		this.setQuery += ', ';
 	}
 
-	_this.setQuery += column + ' = ?';
-	_this.values.push(value);
+	this.setQuery += column + ' = ?';
+	this.values.push(value);
 
 	return this;
 };
@@ -301,47 +303,51 @@ Eloquent.prototype.set = function (column, value)
 /**
  * Update a record
  *
- * @param callback
- * @param [id=]
- * @param [column=]
+ * @param {function} callback
+ * @param {number} [id=]
+ * @param {string} [column=]
+ *
  * @returns {Eloquent}
  */
-Eloquent.prototype.update = function (callback, id, column)
+Eloquent.prototype.update = function(callback, id, column)
 {
 	var _this = this;
 
-	if ( typeof id !== 'undefined' )
+	if(typeof id !== 'undefined')
 	{
-		if ( typeof column === 'undefined' )
+		if(typeof column === 'undefined')
 		{
-			column = _this.primary_key;
+			column = this.primary_key;
 		}
 
-		_this.where(column, '-', id);
+		this.where(column, '-', id);
 	}
 
-	_this.query = "UPDATE " + _this.table + " " + _this.setQuery + " " + _this.whereQuery;
+	this.query = "UPDATE " + this.table + " " + this.setQuery + " " + this.whereQuery;
 
-	_this.db.transaction(function (tx)
+	this.db.transaction(function (tx)
 	{
 		tx.executeSql(_this.query, _this.values, function (tx, res)
 			{
-				callback();
+				if(typeof res.rowsAffected !== 'undefined' && res.rowsAffected > 0)
+				{
+					callback();
+				}
 			},
 			_this._defaultErrorCallback);
 	});
 
-	_this.EoS();
+	this.EoS();
 
 	return this;
 };
 
 /**
+ * Default callback for when a Query failes to execute
  *
  * @param e
- * @private
  */
-Eloquent.prototype._defaultErrorCallback = function (e)
+Eloquent.prototype._defaultErrorCallback = function(e)
 {
 	console.log('An error occured:' + e.message);
 };
