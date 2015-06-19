@@ -1,7 +1,9 @@
 /**
- * THE SQELOQUENT MODEL
- * ------------------------
- * This model uses handy functions to replacte the Laravel Eloquent db management syntax for SQLite.
+ * Eloquent for SQLite in Javascript
+ * http://git.u-lab.nl/Sven/eloquent-javascript
+ *
+ * This is a class I wrote with which you can write Eloquent style Queries in Javascript that works with a SQLite database.
+ * I wrote it for usage in Cordova Apps with the Cordova SQLite Plugin.
  *
  * @company Usability Laboratory
  * @authors Sven Stolk
