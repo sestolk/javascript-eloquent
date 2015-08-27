@@ -1,19 +1,16 @@
 /**
- * Markets Model
+ * Market model
+ *
+ * @returns {MarketModel}
  *
  * @constructor
  */
-function Markets()
+var MarketModel = function ()
 {
-	// Extend the Eloquent class
 	Eloquent.call(this);
 
-	// Set the table name for this table
+	// Set the table name
 	this.table = 'markets';
 
-	// For more options check the Eloquent constructor
-}
-
-// Add all methods of Eloquent to this Class
-// That is how extending works in Javascript
-Markets.prototype = Object.create(Eloquent.prototype);
+	return this;
+};

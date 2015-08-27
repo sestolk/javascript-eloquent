@@ -1,9 +1,7 @@
 <html>
 <head>
-	
-	<script type="text/javascript" src="\"></script>
 
-	<title></title>
+	<title>Example</title>
 </head>
 <body>
 
@@ -13,14 +11,22 @@
 	<script type="text/javascript" src="src/models.js"></script>
 	<script type="text/javascript">
 		var app = {
-			database : null
+			db: null
 		};
 
-		$(function()
+		window.onload = function ()
 		{
+			var myDB = new Database();
+
 			// Initialize Database
-			app.Database = new Database().initialize();
-		});
+			app.db = myDB.getDatabase();
+
+			// Call your model
+			var markets = new MarketModel().all([], function ()
+			{
+				// Do something with your markets
+			});
+		};
 	</script>
 
 </body>

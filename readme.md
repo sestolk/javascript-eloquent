@@ -15,6 +15,26 @@ Check the included [index.html](../index.html) for a live example and installati
 ## Available Queries
 Below you will find some examples of the available Queries. More will surely be added, but as far as I can see, these are the most important ones.
 
+### Create table Queries
+Examples:
+```
+var MarketModel = function ()
+{
+	//...
+	this.createModel = function ( callback )
+	{
+		_this.createColumn('id', 'INTEGER')
+			.createColumn('user_id', 'INTEGER')
+			.createColumn('name', 'TEXT')
+			.primaryKey(['id', 'user_id']) // Create a combined primary key
+			.createTable(callback);
+	};
+	//...
+};
+
+new MarketModel().createModel(function(){});
+```
+
 ### Select Queries
 As you would expect from a normal Query, *__where__* aswell as *__orderBy__* clauses are optional and can be repeated as many times as needed. Order of calling is not important.
 
@@ -25,15 +45,15 @@ Examples:
 ```
 // One result
 // Query: "SELECT * FROM markets WHERE id = 5 ORDER BY id DESC LIMIT 1"
-new Markets().where('id', '=', 5).orderBy('id', 'DESC').first([], function(){});
+new MarketModel().where('id', '=', 5).orderBy('id', 'DESC').first([], function(){});
 
 // or multiple results
 // Query: "SELECT * FROM markets WHERE id = 5 ORDER BY id ASC"
-new Markets().where('id', '=', 5).orderBy('id').get([], function(){});
+new MarketModel().where('id', '=', 5).orderBy('id').get([], function(){});
 
 // synonym for get
 // Query: "SELECT id, name FROM markets ORDER BY id DESC"
-new Markets().orderBy('id', 'DESC').all(['id', 'name'], function(){});
+new MarketModel().orderBy('id', 'DESC').all(['id', 'name'], function(){});
 ```
 
 ### Insert Query
@@ -42,7 +62,7 @@ Unlike with the Update Query, where and orderBy clauses are ignored. So there is
 Examples:
 ```
 // Query: "INSERT INTO markets (test, test1) VALUES ('1235', 'qwerty')"
-new Markets().column('test', '1235').column('test1', 'qwerty').add(function (){});
+new MarketModel().column('test', '1235').column('test1', 'qwerty').add(function (){});
 ```
 
 **NOTE:** *__column__* clauses are optional and can be repeated as many times as needed.
@@ -53,9 +73,9 @@ Examples:
 ```
 // These two examples will produce the same Query
 // Query: "UPDATE markets SET test = '1235', test2 = 'qwerty' WHERE id = 5"
-new Markets().set('test', '1235').set('test2', 'qwerty').where('id', '=', 5).update(function (){});
+new MarketModel().set('test', '1235').set('test2', 'qwerty').where('id', '=', 5).update(function (){});
 // Or
-new Markets().set('test', '1235').set('test2', 'qwerty').update(function (){}, 5);
+new MarketModel().set('test', '1235').set('test2', 'qwerty').update(function (){}, 5);
 ```
 
 **NOTE:** *__set__* aswell as *__where__* and *__orderBy__* clauses are optional and can be repeated as many times as needed. Order of calling is not important.
@@ -66,9 +86,9 @@ Examples:
 ```
 // These two examples will produce the same Query
 // Query: "DELETE FROM markets WHERE id = 5"
-new Markets().where('id', '=', 5).delete(function(){});
+new MarketModel().where('id', '=', 5).remove(function(){});
 // Or
-new Markets().delete(function(){}, 5);
+new MarketModel().remove(function(){}, 5);
 ```
 
 **NOTE:** *__where__* clauses are optional and can be repeated as many times as needed. *__orderBy__* clauses are ignored. Order of calling is not important.
@@ -80,9 +100,6 @@ new Markets().delete(function(){}, 5);
 * Soft deletion
 * Record touching
 * Raw Query
-
-## Ignored feature(s)
-The features will be ignored as they are simply to complex to build in Javascript.
 * Relationships
 
 ### Author(s)
