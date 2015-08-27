@@ -60,7 +60,7 @@ new MarketModel().orderBy('id', 'DESC').all(['id', 'name'], function(){});
 Unlike with the Update Query, where and orderBy clauses are ignored. So there is no point of chaining them.
 
 Examples:
-```
+``` javascript
 // Query: "INSERT INTO markets (test, test1) VALUES ('1235', 'qwerty')"
 new MarketModel().column('test', '1235').column('test1', 'qwerty').add(function (){});
 ```
