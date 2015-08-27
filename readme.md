@@ -17,7 +17,7 @@ Below you will find some examples of the available Queries. More will surely be 
 
 ### Create table Queries
 Examples:
-```
+``` javascript
 var MarketModel = function ()
 {
 	//...
@@ -42,7 +42,7 @@ The *__first__*, *__get__* or *__all__* methods should be called last as they wi
 In the first argument you can define the columns that should be returned, an empty array will return **\*** (read: all) columns.
 
 Examples:
-```
+``` javascript
 // One result
 // Query: "SELECT * FROM markets WHERE id = 5 ORDER BY id DESC LIMIT 1"
 new MarketModel().where('id', '=', 5).orderBy('id', 'DESC').first([], function(){});
@@ -70,7 +70,7 @@ new MarketModel().column('test', '1235').column('test1', 'qwerty').add(function 
 ### Update Query
 
 Examples:
-```
+``` javascript
 // These two examples will produce the same Query
 // Query: "UPDATE markets SET test = '1235', test2 = 'qwerty' WHERE id = 5"
 new MarketModel().set('test', '1235').set('test2', 'qwerty').where('id', '=', 5).update(function (){});
@@ -83,7 +83,7 @@ new MarketModel().set('test', '1235').set('test2', 'qwerty').update(function (){
 ### Remove Query
 
 Examples:
-```
+``` javascript
 // These two examples will produce the same Query
 // Query: "DELETE FROM markets WHERE id = 5"
 new MarketModel().where('id', '=', 5).remove(function(){});
