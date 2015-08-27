@@ -22,7 +22,7 @@ The *__first__*, *__get__* or *__all__* methods should be called last as they wi
 In the first argument you can define the columns that should be returned, an empty array will return **\*** (read: all) columns.
 
 Examples:
-```
+```javascript
 // One result
 // Query: "SELECT * FROM markets WHERE id = 5 ORDER BY id DESC LIMIT 1"
 new Markets().where('id', '=', 5).orderBy('id', 'DESC').first([], function(){});
@@ -40,7 +40,7 @@ new Markets().orderBy('id', 'DESC').all(['id', 'name'], function(){});
 Unlike with the Update Query, where and orderBy clauses are ignored. So there is no point of chaining them.
 
 Examples:
-```
+```javascript
 // Query: "INSERT INTO markets (test, test1) VALUES ('1235', 'qwerty')"
 new Markets().column('test', '1235').column('test1', 'qwerty').add(function (){});
 ```
@@ -50,7 +50,7 @@ new Markets().column('test', '1235').column('test1', 'qwerty').add(function (){}
 ### Update Query
 
 Examples:
-```
+```javascript
 // These two examples will produce the same Query
 // Query: "UPDATE markets SET test = '1235', test2 = 'qwerty' WHERE id = 5"
 new Markets().set('test', '1235').set('test2', 'qwerty').where('id', '=', 5).update(function (){});
@@ -63,7 +63,7 @@ new Markets().set('test', '1235').set('test2', 'qwerty').update(function (){}, 5
 ### Remove Query
 
 Examples:
-```
+```javascript
 // These two examples will produce the same Query
 // Query: "DELETE FROM markets WHERE id = 5"
 new Markets().where('id', '=', 5).delete(function(){});
