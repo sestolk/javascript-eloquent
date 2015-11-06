@@ -25,16 +25,20 @@ var Eloquent = function ()
 	var query = '';
 	var whereStarted = false;
 	var whereQuery = '';
+	var whereIsNested = false;
 	var orderByStarted = false;
 	var orderByQuery = '';
 	var limitQuery = '';
 	var setStarted = false;
 	var setQuery = '';
+	var joinStarted = false;
+	var joinQuery = '';
 	var columns = [];
 	var parameters = [];
 	var values = [];
 	var createColumns = [];
 	var createPrimaryKeys = [];
+	var modelRelations = [];
 
 	function setDatabase()
 	{
@@ -52,19 +56,45 @@ var Eloquent = function ()
 	 */
 	function quoteColumns( columns )
 	{
-		var quoted, safe = ['*'];
+		var quoted, safe = ['*'], column, columnTable, table;
 
 		if ( typeof columns === 'object' )
 		{
 			quoted = [];
 			for ( var c = 0; c < columns.length; c++ )
 			{
-				quoted.push(((safe.indexOf(columns[c]) > -1) ? columns[c] : '"' + columns[c] + '"'));
+				table = '';
+				column = columns[c];
+
+				// Check for table reference
+				if ( column.indexOf('.') > -1 )
+				{
+					columnTable = column.split('.');
+					table = columnTable[0];
+					column = columnTable[1];
+
+					// "table".* or "table"."column"
+					quoted.push(((safe.indexOf(column) > -1) ? '"' + table + '".' + column : '"' + table + '"."' + column + '"'));
+				}
+				else
+				{
+					quoted.push(((safe.indexOf(column) > -1) ? column : '"' + column + '"'));
+				}
 			}
 		}
 		else
 		{
 			quoted = (safe.indexOf(columns) > -1) ? columns : '"' + columns + '"';
+
+			if ( columns.indexOf('.') > -1 )
+			{
+				columnTable = columns.split('.');
+				table = columnTable[0];
+				column = columnTable[1];
+
+				// "table".* or "table"."column"
+				quoted = ((safe.indexOf(column) > -1) ? '"' + table + '".' + column : '"' + table + '"."' + column + '"');
+			}
 		}
 
 		return quoted;
@@ -86,32 +116,38 @@ var Eloquent = function ()
 
 		columns = quoteColumns(columns);
 
-		return "SELECT " + columns.join(', ') + " FROM " + _this.table + " " + whereQuery + " " + orderByQuery + " " + limitQuery;
+		return "SELECT " + columns.join(', ') + " FROM " + _this.table + " " + joinQuery + " " + whereQuery + " " + orderByQuery + " " + limitQuery;
 	}
 
 	/**
-	 * Flatten the results of a query into an array
-	 * Because this is used after your results have been returned this functions is not part of the Eloquent class
+	 * Call the relationships
 	 *
-	 * @param {object} data
-	 * @param {string} key
-	 * @param {string} valueKey
-	 * @returns {object}
+	 * @param {object|Array} data
+	 * @param {function} callback
 	 */
-	function columnize( data, key, valueKey )
+	function callRelations( data, callback )
 	{
-		var results = {};
+		var modelIteration;
 
-		for ( var d in data )
+		modelIteration = new Iterator();
+
+		modelIteration.itemIteration(modelRelations, function ( rel, next )
 		{
-			if ( data.hasOwnProperty(d) )
+			// Call customer on current model
+			if ( isDefined(_this[rel]) )
 			{
-				var result = data[d];
-				results[result[key]] = result[valueKey];
+				_this[rel](data, rel, next);
 			}
-		}
+			else
+			{
+				console.log('Relation is not defined in your model');
+			}
+		});
 
-		return results;
+		modelIteration.run(function ()
+		{
+			callback(data);
+		});
 	}
 
 	/**
@@ -330,6 +366,17 @@ var Eloquent = function ()
 	}
 
 	/**
+	 * Checks if the given value is a function
+	 *
+	 * @param value
+	 * @returns {boolean}
+	 */
+	function isFunction( value )
+	{
+		return (typeof value === 'function' && value !== null);
+	}
+
+	/**
 	 * Check if the given var is a real array
 	 *
 	 * @param o
@@ -338,6 +385,143 @@ var Eloquent = function ()
 	function isArray( o )
 	{
 		return Object.prototype.toString.call(o) === '[object Array]';
+	}
+
+	/**
+	 * Returns an array of only the given key
+	 *
+	 * @param {object|Array} array
+	 * @param {string} key
+	 * @param {boolean} [unique=false]
+	 *
+	 * @returns {object|Array}
+	 */
+	function arrayColumn( array, key, unique )
+	{
+		var i,
+			item,
+			result = [];
+
+		unique = unique || false;
+
+		if ( !isArray(array) )
+		{
+			if ( isDefined(array[key]) )
+			{
+				result.push(array[key]);
+			}
+		}
+		else
+		{
+			for ( i in array ) if ( array.hasOwnProperty(i) )
+			{
+				item = array[i];
+
+				if ( isDefined(item[key]) )
+				{
+					result.push(item[key]);
+				}
+			}
+		}
+
+		if ( unique )
+		{
+			return arrayUnique(result);
+		}
+
+		return result;
+	}
+
+	/**
+	 *
+	 * @param arr
+	 * @returns {Array}
+	 */
+	function arrayUnique( arr )
+	{
+		function onlyUnique( value, index, self )
+		{
+			return self.indexOf(value) === index;
+		}
+
+		return arr.filter(onlyUnique)
+	}
+
+	/**
+	 * Merge second into first based on the firstKey and secondKey
+	 *
+	 * @param {object|Array} first
+	 * @param {object|Array} second
+	 * @param {string} firstKey
+	 * @param {string} secondKey
+	 * @param {string} mergeKey
+	 * @param {boolean} [forceObject=false]
+	 */
+	function mergeResults( first, second, firstKey, secondKey, mergeKey, forceObject )
+	{
+		var i,
+			item,
+			firstItems = [],
+			ii,
+			item2,
+			secondItems = [];
+
+		forceObject = forceObject || false;
+
+		if ( !isArray(second) )
+		{
+			secondItems[second[secondKey]] = second;
+		}
+		else
+		{
+			for ( ii in second ) if ( second.hasOwnProperty(ii) )
+			{
+				item2 = second[ii];
+
+				// secondKey exists in the object
+				if ( isDefined(item2[secondKey]) )
+				{
+					if ( forceObject )
+					{
+						secondItems[item2[secondKey]] = item2;
+					}
+					else
+					{
+						if ( !isDefined(secondItems[item2[secondKey]]) )
+						{
+							secondItems[item2[secondKey]] = [];
+						}
+
+						secondItems[item2[secondKey]].push(item2);
+					}
+				}
+			}
+		}
+
+		if ( !isArray(first) )
+		{
+			first[mergeKey] = secondItems[first[firstKey]];
+
+			return first;
+		}
+		else
+		{
+			for ( i in first ) if ( first.hasOwnProperty(i) )
+			{
+				item = first[i];
+
+				item[mergeKey] = [];
+
+				if ( isDefined(secondItems[item[firstKey]]) )
+				{
+					item[mergeKey] = secondItems[item[firstKey]];
+				}
+
+				firstItems.push(item);
+			}
+		}
+
+		return firstItems;
 	}
 
 	/**
@@ -359,6 +543,7 @@ var Eloquent = function ()
 
 	/**
 	 * Create a Create table statement
+	 *
 	 * @param callback
 	 *
 	 * @returns {Eloquent}
@@ -453,7 +638,7 @@ var Eloquent = function ()
 	 * Add a where clause to the Query
 	 *
 	 * @param {string} column
-	 * @param {string} [operator="="]
+	 * @param {string} operator
 	 * @param {string|Array|number} value
 	 * @param {string} [statement="AND"]
 	 *
@@ -470,7 +655,14 @@ var Eloquent = function ()
 		}
 		else
 		{
-			whereQuery += ' ' + statement + ' ';
+			if ( !whereIsNested )
+			{
+				whereQuery += ' ' + statement + ' ';
+			}
+			else
+			{
+				whereIsNested = false;
+			}
 		}
 
 		if ( value instanceof Array )
@@ -488,6 +680,50 @@ var Eloquent = function ()
 			whereQuery += quoteColumns(column) + ' ' + operator + ' ?';
 			values.push(value);
 		}
+
+		return this;
+	};
+
+	/**
+	 * Add an OR WHERE clause to the Query
+	 *
+	 * @param {string} column
+	 * @param {string} operator
+	 * @param {string|Array|number} value
+	 *
+	 * @return {Eloquent}
+	 */
+	this.orWhere = function(column, operator, value )
+	{
+		return this.where(column, operator, value, 'OR');
+	};
+
+	/**
+	 * Add a nested where statement to the Query
+	 *
+	 * @param {function} wheres
+	 * @param {string} [statement="AND"]
+	 *
+	 * @returns {Eloquent}
+	 */
+	this.whereNested = function ( wheres, statement )
+	{
+		statement = statement || 'AND';
+		whereIsNested = true;
+
+		if ( !whereStarted )
+		{
+			whereQuery = 'WHERE (';
+			whereStarted = true;
+		}
+		else
+		{
+			whereQuery += ' ' + statement + ' (';
+		}
+
+		wheres(_this);
+
+		whereQuery += ' )';
 
 		return this;
 	};
@@ -546,6 +782,8 @@ var Eloquent = function ()
 	 */
 	this.first = function ( columns, callback )
 	{
+		var result;
+
 		this.db.transaction(function ( tx )
 		{
 			query = select(columns) + " LIMIT 1";
@@ -553,11 +791,21 @@ var Eloquent = function ()
 				{
 					if ( isDefined(res) && res.rows.length > 0 )
 					{
-						callback(res.rows.item(0));
+						result = res.rows.item(0);
+
+						// We need to get some relations
+						if ( !isEmpty(modelRelations) )
+						{
+							callRelations(result, callback);
+						}
+						else
+						{
+							callback(result);
+						}
 					}
 					else
 					{
-						callback();
+						callback([]);
 					}
 				},
 				function ( transaction, e )
@@ -591,11 +839,19 @@ var Eloquent = function ()
 					{
 						for ( var r = 0; r < res.rows.length; r++ ) results.push(res.rows.item(r));
 
-						callback(results);
+						// We need to get some relations
+						if ( !isEmpty(modelRelations) )
+						{
+							callRelations(results, callback);
+						}
+						else
+						{
+							callback(results);
+						}
 					}
 					else
 					{
-						callback();
+						callback([]);
 					}
 				},
 				function ( transaction, e )
@@ -618,6 +874,35 @@ var Eloquent = function ()
 	this.all = function ( columns, callback )
 	{
 		return this.get(columns, callback);
+	};
+
+	/**
+	 * (INNER) JOIN a table
+	 *
+	 * @param {string} table
+	 * @param {string} first
+	 * @param {string} operator
+	 * @param {string} second
+	 * @param {string} [type='INNER']
+	 *
+	 * @returns {Eloquent}
+	 */
+	this.join = function ( table, first, operator, second, type )
+	{
+		type = type || 'INNER';
+
+		if ( !joinStarted )
+		{
+			joinQuery = type + ' JOIN ' + table + ' ON ' + quoteColumns(table + '.' + first) + ' ' + operator + ' ' + quoteColumns(_this.table + '.' + second);
+
+			joinStarted = true;
+		}
+		else
+		{
+			joinQuery += ' ' + type + ' JOIN ' + table + ' ON ' + quoteColumns(table + '.' + first) + ' ' + operator + ' ' + quoteColumns(_this.table + '.' + second);
+		}
+
+		return this;
 	};
 
 	/**
@@ -853,7 +1138,6 @@ var Eloquent = function ()
 	};
 
 	/**
-	 *
 	 * Conditional Query based on if a record exists, return result if exists
 	 *
 	 * @param {function} exists
@@ -890,7 +1174,6 @@ var Eloquent = function ()
 	};
 
 	/**
-	 *
 	 * Conditional Query based on if records exists, return all results if exists
 	 *
 	 * @param {function} exists
@@ -928,16 +1211,166 @@ var Eloquent = function ()
 	 *
 	 * @param value
 	 */
-	this.id = function(value)
+	this.id = function ( value )
 	{
 		return _this.where('id', '=', value);
 	};
 
-	this.debug = function ( text )
+	/**
+	 * Define which relationships should be applied to this model
+	 *
+	 * @param {string|Array} relations
+	 *
+	 * @returns {Eloquent}
+	 */
+	this.relations = function ( relations )
 	{
-		if ( this.showDebug )
+		if ( isArray(relations) )
 		{
-			console.log(text);
+			for ( var i = 0; i < relations.length; i++ )
+			{
+				modelRelations.push(relations[i]);
+			}
+		}
+		else
+		{
+			// I want these functions
+			modelRelations.push(relations);
+		}
+
+		return this;
+	};
+
+	/**
+	 * Create a Many/One-to-Many relationship
+	 *
+	 * @param {string} model
+	 * @param {string} foreignKey
+	 * @param {string} localKey
+	 * @param {Array} args [data, key, callback]
+	 * @param {Function} [statements=]
+	 *
+	 * @returns {Eloquent}
+	 */
+	this.hasMany = function ( model, foreignKey, localKey, args, statements )
+	{
+		var relation, localKeys, data, key, callback;
+
+		data = args[0];
+		key = args[1];
+		callback = args[2];
+		relation = new window[model];
+		localKeys = arrayColumn(data, localKey, true);
+
+		if ( isFunction(statements) )
+		{
+			relation = statements(relation);
+		}
+
+		return relation.where(foreignKey, 'IN', localKeys).get([], function ( items )
+		{
+			data = mergeResults(data, items, localKey, foreignKey, key);
+
+			callback();
+		});
+	};
+
+	/**
+	 * Create a Many/One-to-One relationship
+	 *
+	 * @param {string} model
+	 * @param {string} foreignKey
+	 * @param {string} localKey
+	 * @param {Array} args [data, key, callback]
+	 * @param {Function} [statements=]
+	 *
+	 * @returns {Eloquent}
+	 */
+	this.hasOne = function ( model, foreignKey, localKey, args, statements )
+	{
+		var relation, localKeys, data, key, callback;
+
+		data = args[0];
+		key = args[1];
+		callback = args[2];
+		relation = new window[model];
+		localKeys = arrayColumn(data, localKey, true);
+
+		if ( isFunction(statements) )
+		{
+			relation = statements(relation);
+		}
+
+		return relation.where(foreignKey, 'IN', localKeys).get([], function ( items )
+		{
+			data = mergeResults(data, items, localKey, foreignKey, key, true);
+
+			callback();
+		});
+	};
+
+	/**
+	 * Same as hasOne but with the keys switched around
+	 *
+	 * @param {string} model
+	 * @param {string} foreignKey
+	 * @param {string} otherKey
+	 * @param {Array} args [data, key, callback]
+	 * @param {Function} [statements=]
+	 *
+	 * @returns {Eloquent}
+	 */
+	this.belongsTo = function ( model, foreignKey, otherKey, args, statements )
+	{
+		return this.hasOne(model, otherKey, foreignKey, args, statements);
+	};
+
+	/**
+	 *
+	 * @param {string} model
+	 * @param {string} table
+	 * @param {string} localKey
+	 * @param {string} foreignKey
+	 * @param {string} otherKey
+	 * @param {string} otherKey2
+	 * @param {Array} args [data, key, callback]
+	 * @param {Function} [statements=]
+	 *
+	 * @returns {Eloquent}
+	 */
+	this.belongsToMany = function ( model, table, localKey, foreignKey, otherKey, otherKey2, args, statements )
+	{
+		var relation, localKeys, data, key, callback;
+
+		data = args[0];
+		key = args[1];
+		callback = args[2];
+		relation = new window[model];
+		localKeys = arrayColumn(data, localKey, true);
+
+		if ( isFunction(statements) )
+		{
+			relation = statements(relation);
+		}
+
+		return relation.where(relation.table + '.' + foreignKey, 'IN', localKeys).join(table, otherKey, '=', otherKey2).get([], function ( items )
+		{
+			data = mergeResults(data, items, localKey, foreignKey, key);
+
+			callback();
+		});
+	};
+
+	/**
+	 * Debug some variable only when debug is enabled
+	 *
+	 * @param {*} variable
+	 */
+	this.debug = function ( variable )
+	{
+		if ( _this.showDebug )
+		{
+			console.log(variable);
 		}
 	};
 

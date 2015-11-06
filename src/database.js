@@ -2,11 +2,11 @@
  *
  * @constructor
  */
-var Database = function()
+var Database = function ( name )
 {
-	this.db = window.openDatabase('DatabaseName', '1.0', '', (5 * 1024 * 1024));
+	this.db = window.openDatabase(name, '1.0', '', (5 * 1024 * 1024));
 
-	this.getDatabase = function()
+	this.getDatabase = function ()
 	{
 		return this.db;
 	};
