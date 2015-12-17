@@ -1,6 +1,6 @@
 {
   "name": "js_sqlite_eloquent",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "This is a class I wrote with which you can write Eloquent style Queries in Javascript that works with a SQLite database.\r I wrote it for usage in Cordova Apps.",
   "main": "index.js",
   "scripts": {
