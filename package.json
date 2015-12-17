@@ -14,5 +14,6 @@
   "license": "BSD-2-Clause",
   "dependencies": {
     "copy": "~0.1.3"
-  }
+  },
+  "private": true
 }
