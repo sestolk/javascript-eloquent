@@ -1,0 +1,18 @@
+{
+  "name": "js_sqlite_eloquent",
+  "version": "0.0.1",
+  "description": "This is a class I wrote with which you can write Eloquent style Queries in Javascript that works with a SQLite database.\r I wrote it for usage in Cordova Apps.",
+  "main": "index.js",
+  "scripts": {
+    "install": "node install.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@git.u-lab.nl:Sven/eloquent-javascript.git"
+  },
+  "author": "Sven Stolk",
+  "license": "BSD-2-Clause",
+  "dependencies": {
+    "copy": "~0.1.3"
+  }
+}
