@@ -1,6 +1,7 @@
 // Install the package in your application
 var fs = require('fs'),
 	copy = require('copy'),
+	path = require('path'),
 	output = false,
 	outputDirs = ['../../_libs', '../../libs'];
 
