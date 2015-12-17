@@ -23,9 +23,12 @@ for ( var i in outputDirs ) if ( outputDirs.hasOwnProperty(i) )
 
 if ( output !== false )
 {
-	copy('src/*.js', output + '/js_sqlite_eloquent', function ()
+	copy('install/*', output + '/js_sqlite_eloquent', function ()
 	{
-		console.info('Install completed!');
+		copy('src/*.js', output + '/js_sqlite_eloquent', function ()
+		{
+			console.info('Install completed!');
+		});
 	});
 }
 else
