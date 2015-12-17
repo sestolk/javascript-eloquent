@@ -23,7 +23,12 @@ for ( var i in outputDirs ) if ( outputDirs.hasOwnProperty(i) )
 
 if ( output !== false )
 {
-	copy('install/*', output + '/js_sqlite_eloquent', function ()
+	copy.one('install/ignore_git', output + '/js_sqlite_eloquent', {
+		rewrite: function ( fp, dest )
+		{
+			return path.resolve(dest, '.gitignore');
+		}
+	}, function ()
 	{
 		copy('src/*.js', output + '/js_sqlite_eloquent', function ()
 		{
