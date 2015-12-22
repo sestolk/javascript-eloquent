@@ -132,20 +132,28 @@ var Eloquent = function ()
 	 */
 	function callRelations( data, callback )
 	{
-		var modelIteration;
+		var modelIteration, currentRelation, nestedRelations = '';
 
 		modelIteration = new EloquentIterator();
 
 		modelIteration.itemIteration(modelRelations, function ( rel, next )
 		{
-			// Call customer on current model
-			if ( _this.isDefined(_this[rel]) )
+			currentRelation = rel;
+			if ( rel.indexOf('.') !== -1 )
 			{
-				_this[rel](data, rel, next);
+				currentRelation = rel.substr(0, rel.indexOf('.'));
+				nestedRelations = rel.substr(rel.indexOf('.') + 1);
+				nestedRelations = nestedRelations.split('|');
+			}
+
+			// Call customer on current model
+			if ( _this.isDefined(_this[currentRelation]) )
+			{
+				_this[currentRelation](data, currentRelation, next, nestedRelations);
 			}
 			else
 			{
-				console.log('Relation is not defined in your model');
+				console.log('Relation [' + currentRelation + '] is not defined in your model');
 			}
 		});
 
@@ -274,7 +282,7 @@ var Eloquent = function ()
 	 * @param {string} valueKey
 	 * @returns {object}
 	 */
-	this.columnize = function( data, key, valueKey )
+	this.columnize = function ( data, key, valueKey )
 	{
 		var results = {};
 
@@ -351,7 +359,7 @@ var Eloquent = function ()
 	 *
 	 * @return {Eloquent}
 	 */
-	this.orWhere = function(column, operator, value )
+	this.orWhere = function ( column, operator, value )
 	{
 		return this.where(column, operator, value, 'OR');
 	};
@@ -783,7 +791,7 @@ var Eloquent = function ()
 
 		this.db.transaction(function ( tx )
 		{
-			tx.executeSql(query, values, function (tx, res)
+			tx.executeSql(query, values, function ( tx, res )
 				{
 					if ( _this.isDefined(res) && res.rows.length > 0 )
 					{
@@ -930,13 +938,19 @@ var Eloquent = function ()
 	 */
 	this.hasMany = function ( model, foreignKey, localKey, args, statements )
 	{
-		var relation, localKeys, data, key, callback;
+		var relation, localKeys, data, key, callback, delegated;
 
 		data = args[0];
 		key = args[1];
 		callback = args[2];
+		delegated = args[3];
 		relation = new window[model];
 		localKeys = _this.arrayColumn(data, localKey, true);
+
+		if ( !_this.isEmpty(delegated) )
+		{
+			relation = relation.relations(delegated);
+		}
 
 		if ( _this.isFunction(statements) )
 		{
@@ -964,13 +978,19 @@ var Eloquent = function ()
 	 */
 	this.hasOne = function ( model, foreignKey, localKey, args, statements )
 	{
-		var relation, localKeys, data, key, callback;
+		var relation, localKeys, data, key, callback, delegated;
 
 		data = args[0];
 		key = args[1];
 		callback = args[2];
+		delegated = args[3];
 		relation = new window[model];
 		localKeys = _this.arrayColumn(data, localKey, true);
+
+		if ( !_this.isEmpty(delegated) )
+		{
+			relation = relation.relations(delegated);
+		}
 
 		if ( _this.isFunction(statements) )
 		{
@@ -1016,13 +1036,19 @@ var Eloquent = function ()
 	 */
 	this.belongsToMany = function ( model, table, localKey, foreignKey, otherKey, otherKey2, args, statements )
 	{
-		var relation, localKeys, data, key, callback;
+		var relation, localKeys, data, key, callback, delegated;
 
 		data = args[0];
 		key = args[1];
 		callback = args[2];
+		delegated = args[3];
 		relation = new window[model];
 		localKeys = _this.arrayColumn(data, localKey, true);
+
+		if ( !_this.isEmpty(delegated) )
+		{
+			relation = relation.relations(delegated);
+		}
 
 		if ( _this.isFunction(statements) )
 		{
@@ -1055,7 +1081,7 @@ var Eloquent = function ()
 	return this;
 };
 
-var EloquentHelpers = function()
+var EloquentHelpers = function ()
 {
 	var _this = this;
 
@@ -1264,7 +1290,7 @@ var EloquentHelpers = function()
 	 * @param value
 	 * @returns {boolean}
 	 */
-	this.isEmpty = function( value )
+	this.isEmpty = function ( value )
 	{
 		if ( value && (typeof value === 'object' || value instanceof Array ) )
 		{
@@ -1280,7 +1306,7 @@ var EloquentHelpers = function()
 	 * @param value
 	 * @returns {boolean}
 	 */
-	this.isFunction = function( value )
+	this.isFunction = function ( value )
 	{
 		return (typeof value === 'function' && value !== null);
 	};
@@ -1291,7 +1317,7 @@ var EloquentHelpers = function()
 	 * @param o
 	 * @returns {boolean}
 	 */
-	this.isArray = function( o )
+	this.isArray = function ( o )
 	{
 		return Object.prototype.toString.call(o) === '[object Array]';
 	};
@@ -1305,7 +1331,7 @@ var EloquentHelpers = function()
 	 *
 	 * @returns {object|Array}
 	 */
-	this.arrayColumn = function( array, key, unique )
+	this.arrayColumn = function ( array, key, unique )
 	{
 		var i,
 			item,
@@ -1346,7 +1372,7 @@ var EloquentHelpers = function()
 	 * @param arr
 	 * @returns {Array}
 	 */
-	this.arrayUnique = function( arr )
+	this.arrayUnique = function ( arr )
 	{
 		function onlyUnique( value, index, self )
 		{
@@ -1366,7 +1392,7 @@ var EloquentHelpers = function()
 	 * @param {string} mergeKey
 	 * @param {boolean} [forceObject=false]
 	 */
-	this.mergeResults = function( first, second, firstKey, secondKey, mergeKey, forceObject )
+	this.mergeResults = function ( first, second, firstKey, secondKey, mergeKey, forceObject )
 	{
 		var i,
 			item,
@@ -1434,7 +1460,7 @@ var EloquentHelpers = function()
 	}
 };
 
-var EloquentIterator = function()
+var EloquentIterator = function ()
 {
 	EloquentHelpers.call(this);
 
