@@ -114,7 +114,7 @@ var Eloquent = function ()
 	 */
 	function select( columns )
 	{
-		if ( isEmpty(columns) )
+		if ( _this.isEmpty(columns) )
 		{
 			columns = ['*'];
 		}
@@ -183,11 +183,11 @@ var Eloquent = function ()
 	{
 		query = "CREATE TABLE IF NOT EXISTS " + _this.table;
 
-		if ( !_this.isEmpty(createColumns) )
+		if ( !this.isEmpty(createColumns) )
 		{
 			query += "(" + createColumns.join(',');
 
-			if ( !_this.isEmpty(createPrimaryKeys) )
+			if ( !this.isEmpty(createPrimaryKeys) )
 			{
 				query += ", PRIMARY KEY (" + createPrimaryKeys.join(',') + ")";
 			}
@@ -1082,7 +1082,7 @@ var EloquentHelpers = function()
 		 NO WARRANTY EXPRESSED OR IMPLIED. USE AT YOUR OWN RISK.
 		 See http://www.JSON.org/js.html
 		 */
-		var retVal, json = this.window.JSON;
+		var retVal, json = window.JSON;
 		try
 		{
 			if ( typeof json === 'object' && typeof json.stringify === 'function' )
