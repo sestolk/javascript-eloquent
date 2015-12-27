@@ -14,6 +14,14 @@ var MarketModel = function ()
 	// Set the table name
 	this.table = 'markets';
 
+	this.createModel = function(callback)
+	{
+		return _this
+			.createColumn('id', 'INTEGER', true, true)
+			.createColumn('title', 'TEXT', true)
+			.createTable(callback);
+	};
+
 	/**
 	 * Market belongsTo one city
 	 *

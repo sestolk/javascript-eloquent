@@ -16,8 +16,9 @@ module.exports = function ( config )
 
 		// list of files / patterns to load in the browser
 		files: [
-			'examples/database.js',
 			'src/*.js',
+			'examples/database.js',
+			'examples/models.js',
 			'test/*.js'
 		],
 
