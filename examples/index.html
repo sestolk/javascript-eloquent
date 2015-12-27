@@ -6,9 +6,9 @@
 <body>
 
 
-	<script type="text/javascript" src="src/database.js"></script>
+	<script type="text/javascript" src="database.js"></script>
 	<script type="text/javascript" src="../src/eloquent.js"></script>
-	<script type="text/javascript" src="src/models.js"></script>
+	<script type="text/javascript" src="models.js"></script>
 	<script type="text/javascript">
 		var app = {
 			db: null
@@ -22,7 +22,7 @@
 			app.db = myDB.getDatabase();
 
 			// Call your model
-			var markets = new MarketModel().all([], function ()
+			new MarketModel().all([], function ()
 			{
 				// Do something with your markets
 			});
