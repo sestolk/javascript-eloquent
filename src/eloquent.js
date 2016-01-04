@@ -132,13 +132,14 @@ var Eloquent = function ()
 	 */
 	function callRelations( data, callback )
 	{
-		var modelIteration, currentRelation, nestedRelations = '';
+		var modelIteration, currentRelation, nestedRelations;
 
 		modelIteration = new EloquentIterator();
 
 		modelIteration.itemIteration(modelRelations, function ( rel, next )
 		{
 			currentRelation = rel;
+			nestedRelations = '';
 			if ( rel.indexOf('.') !== -1 )
 			{
 				currentRelation = rel.substr(0, rel.indexOf('.'));
