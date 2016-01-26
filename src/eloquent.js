@@ -396,6 +396,18 @@ var Eloquent = function ()
 	};
 
 	/**
+	 *
+	 * @param {string} column
+	 * @param {Array} value
+	 * @param {string} [statement="AND"]
+	 * @returns {Eloquent}
+	 */
+	this.whereIn = function ( column, value, statement )
+	{
+		return this.where(column, 'IN', value);
+	};
+
+	/**
 	 * Add an order by clause to the Query
 	 *
 	 * @param {string} column

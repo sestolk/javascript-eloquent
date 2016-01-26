@@ -1,4 +1,4 @@
-# Eloquent for SQLite in Javascript
+# Eloquent for SQLite in Javascript [![Build Status](https://travis-ci.org/sestolk/javascript-eloquent.svg?branch=master)](https://travis-ci.org/sestolk/javascript-eloquent)
 
 ## Story of origin
 This is a class I wrote with which you can write [Eloquent](http://laravel.com/docs/eloquent) style Queries in Javascript that works with a SQLite database.

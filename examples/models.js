@@ -18,6 +18,7 @@ var MarketModel = function ()
 	{
 		return _this
 			.createColumn('id', 'INTEGER', true, true)
+			.createColumn('city_id', 'INTEGER', false)
 			.createColumn('title', 'TEXT', true)
 			.createTable(callback);
 	};
@@ -46,8 +47,18 @@ var CityModel = function ()
 {
 	Eloquent.call(this);
 
+	var _this = this;
+
 	// Set the table name
 	this.table = 'cities';
+
+	this.createModel = function(callback)
+	{
+		return _this
+			.createColumn('id', 'INTEGER', true, true)
+			.createColumn('title', 'TEXT', true)
+			.createTable(callback);
+	};
 
 	return this;
 };
