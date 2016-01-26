@@ -4,7 +4,8 @@
   "description": "This is a class I wrote with which you can write Eloquent style Queries in Javascript that works with a SQLite database.\r I wrote it for usage in Cordova Apps.",
   "main": "index.js",
   "scripts": {
-    "install": "node install.js"
+    "install": "node install.js",
+    "test": "node_modules/karma/bin/karma start karma.conf.js --single-run"
   },
   "repository": {
     "type": "git",
