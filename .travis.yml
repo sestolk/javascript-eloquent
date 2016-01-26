@@ -1,6 +1,10 @@
 language: node_js
 node_js:
   - "5.3"
+# whitelist
+branches:
+  only:
+    - master
 # Google Chrome
 #
 # https://github.com/travis-ci/travis-ci/issues/272#issuecomment-14402117
