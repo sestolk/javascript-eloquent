@@ -29,18 +29,18 @@ describe("Eloquent", function ()
 
 describe("Models", function ()
 {
-	var db, market;
+	var db, market, city;
 
 	beforeAll(function ()
 	{
 		db = new Database('Test');
 		app = {db: db.getDatabase()};
-		market = new MarketModel();
+		market = new Market();
 	});
 
 	it("can be properly instantiated", function ()
 	{
-		expect(market).toEqual(jasmine.any(MarketModel));
+		expect(market).toEqual(jasmine.any(Market));
 	});
 
 	it("use the table that has been defined in their models", function ()
@@ -48,95 +48,97 @@ describe("Models", function ()
 		expect(market.table).toEqual('markets');
 	});
 
-	it("can create the table", function ( done )
+	it("can create the table", function (done)
 	{
 		market.createModel(done);
 	});
-});
-
-describe("Queries", function ()
-{
-	var db, market, city, insertedId;
-
-	beforeEach(function ()
-	{
-		db = new Database('Test');
-		app = {db: db.getDatabase()};
-		market = new MarketModel();
-		city = new CityModel();
-	});
 
 	// Drop and create
-	it("remove and (re)-create the table", function ( done )
+	it("drop and (re)-create the table", function (done)
 	{
-		market.drop(function ()
+		new Market().drop(function ()
 		{
-			market.createModel(done);
+			new Market().createModel(done);
 		});
 	});
 
 	// Drop and create multiple tables
-	it("remove and (re)-create the table", function ( done )
+	it("drop and (re)-create multiple tables", function (done)
 	{
-		var iterator = new EloquentIterator();
+		var iterator = new QueryIterator();
 
-		iterator.addIteration(function ( next )
+		iterator.add(function (next)
 		{
-			market.drop(function ()
+			new Market().drop(function ()
 			{
-				market.createModel(next);
+				new Market().createModel(next);
 			});
 		});
 
-		iterator.addIteration(function ( next )
+		iterator.add(function (next)
 		{
-			city.drop(function ()
+			new City().drop(function ()
 			{
-				city.createModel(next);
+				new City().createModel(next);
 			});
 		});
 
 		iterator.run(done);
 	});
+});
+
+describe("Queries", function ()
+{
+	var db, insertedId;
+
+	beforeEach(function ()
+	{
+		db = new Database('Test');
+		app = {db: db.getDatabase()};
+	});
 
 	// Insert one
-	it("insert one record", function ( done )
+	it("insert one record", function (done)
 	{
-		market
-			.column('city_id', 1)
-			.column('title', 'Test market 1')
-			.add(function ( insertId )
-		{
-			insertedId = insertId;
+		new Market()
+			.insert({
+				city_id: 1,
+				title: 'Test market 1'
+			}, function (insertId)
+			{
+				insertedId = insertId;
 
-			expect(insertId).toBe(1);
+				expect(insertId).toBe(1);
 
-			done();
-		});
+				done();
+			});
 	});
 
 	// First
-	it("retrieve one record", function ( done )
+	it("retrieve one record", function (done)
 	{
-		market.id(insertedId).first(null, function ( result )
-		{
-			expect(result).toEqual({id: 1, city_id: 1, title: 'Test market 1'});
+		new Market()
+			.id(insertedId)
+			.first(null, function (result)
+			{
+				expect(result).toEqual({id: 1, city_id: 1, title: 'Test market 1'});
 
-			done();
-		});
+				done();
+			});
 	});
 
 	// Insert multiple
-	it("insert more records", function ( done )
+	it("insert more records", function (done)
 	{
-		var iterator = new EloquentIterator();
+		var iterator = new QueryIterator();
 
-		iterator.addIteration(function ( next )
+		iterator.add(function (next)
 		{
-			new MarketModel()
-				.column('city_id', 1)
-				.column('title', 'Test market 2')
-				.add(function ( insertId )
+			new Market()
+				.insert({
+					city_id: 1,
+					title: 'Test market 2'
+				}, function (insertId)
 				{
 					expect(insertId).toBe(2);
 
@@ -144,12 +146,13 @@ describe("Queries", function ()
 				});
 		});
 
-		iterator.addIteration(function ( next )
+		iterator.add(function (next)
 		{
-			new MarketModel()
-				.column('city_id', 2)
-				.column('title', 'Test market 3')
-				.add(function ( insertId )
+			new Market()
+				.insert({
+					city_id: 2,
+					title: 'Test market 3'
+				}, function (insertId)
 				{
 					expect(insertId).toBe(3);
 
@@ -157,14 +160,28 @@ describe("Queries", function ()
 				});
 		});
 
-		iterator.addIteration(function ( next )
+		iterator.add(function (next)
 		{
-			new MarketModel()
-				.column('city_id', 1)
-				.column('title', 'Test market 4')
-				.add(function ( insertId )
+			new Market()
+				.insert({
+					city_id: 1,
+					title: 'Test market 4'
+				}, function (insertId)
 				{
 					expect(insertId).toBe(4);
+
+					next();
+				});
+		});
+
+		iterator.add(function (next)
+		{
+			new City()
+				.insert({
+					title: 'Rotterdam'
+				}, function (insertId)
+				{
+					expect(insertId).toBe(1);
 
 					next();
 				});
@@ -174,9 +191,9 @@ describe("Queries", function ()
 	});
 
 	// Get
-	it("retrieve multiple records", function ( done )
+	it("retrieve multiple records", function (done)
 	{
-		market.get(['id', 'title'], function ( result )
+		new Market().get(['id', 'title'], function (result)
 		{
 			expect(result).toEqual(
 				[
@@ -191,56 +208,83 @@ describe("Queries", function ()
 	});
 
 	// order by
-	it("orders records by title", function ( done )
+	it("orders records by title", function (done)
 	{
-		market.orderBy('title', 'desc').get(['id', 'title'], function ( result )
-		{
-			expect(result).toEqual(
-				[
-					{id: 4, title: 'Test market 4'},
-					{id: 3, title: 'Test market 3'},
-					{id: 2, title: 'Test market 2'},
-					{id: 1, title: 'Test market 1'}
-				]);
+		new Market()
+			.orderBy('title', 'desc')
+			.get(['id', 'title'], function (result)
+			{
+				expect(result).toEqual(
+					[
+						{id: 4, title: 'Test market 4'},
+						{id: 3, title: 'Test market 3'},
+						{id: 2, title: 'Test market 2'},
+						{id: 1, title: 'Test market 1'}
+					]);
 
-			done();
-		});
+				done();
+			});
 	});
 
 	// order by and limit
-	it("orders 2 records by title", function ( done )
+	it("orders 2 records by title", function (done)
 	{
-		market.orderBy('title', 'desc').limit(2).get(['id', 'title'], function ( result )
-		{
-			expect(result).toEqual(
-				[
-					{id: 4, title: 'Test market 4'},
-					{id: 3, title: 'Test market 3'}
-				]);
+		new Market()
+			.orderBy('title', 'desc')
+			.limit(2)
+			.get(['id', 'title'], function (result)
+			{
+				expect(result).toEqual(
+					[
+						{id: 4, title: 'Test market 4'},
+						{id: 3, title: 'Test market 3'}
+					]);
 
-			done();
-		});
+				done();
+			});
+	});
+
+	// order by
+	it("orders records by title and city_id", function (done)
+	{
+		new Market()
+			.orderBy('title', 'desc')
+			.orderBy('city_id', 'asc')
+			.get(function (result)
+			{
+				expect(result).toEqual(
+					[
+						{id: 4, city_id: 1, title: 'Test market 4'},
+						{id: 3, city_id: 2, title: 'Test market 3'},
+						{id: 2, city_id: 1, title: 'Test market 2'},
+						{id: 1, city_id: 1, title: 'Test market 1'}
+					]);
+
+				done();
+			});
 	});
 
 	// where
-	it("where id equals", function ( done )
+	it("where id equals", function (done)
 	{
-		market.where('id', '=', 3).first(['id', 'title'], function ( result )
-		{
-			expect(result).toEqual({id: 3, title: 'Test market 3'});
+		new Market()
+			.where('id', '=', 3)
+			.first(['id', 'title'], function (result)
+			{
+				expect(result).toEqual({id: 3, title: 'Test market 3'});
 
-			done();
-		});
+				done();
+			});
 	});
 
 	// orWhere
-	it("where id equals or equals", function ( done )
+	it("where id equals or equals", function (done)
 	{
-		market
+		new Market()
 			.where('id', '=', 3)
 			.orWhere('id', '=', 2)
 			.orderBy('title', 'asc')
-			.get(['id', 'title'], function ( result )
+			.get(['id', 'title'], function (result)
 			{
 				expect(result).toEqual([{id: 2, title: 'Test market 2'}, {id: 3, title: 'Test market 3'}]);
 
@@ -249,12 +293,12 @@ describe("Queries", function ()
 	});
 
 	// Where In
-	it("where id in equals", function ( done )
+	it("where id in equals", function (done)
 	{
-		market
+		new Market()
 			.whereIn('id', [2, 3])
 			.orderBy('title', 'asc')
-			.get(['id', 'title'], function ( result )
+			.get(['id', 'title'], function (result)
 			{
 				expect(result).toEqual([{id: 2, title: 'Test market 2'}, {id: 3, title: 'Test market 3'}]);
 
@@ -262,15 +306,15 @@ describe("Queries", function ()
 			});
 	});
 
-	it("where nested wheres", function ( done )
+	it("where nested wheres", function (done)
 	{
-		market
-			.whereNested(function(q)
+		new Market()
+			.whereNested(function (q)
 			{
 				return q.where('id', '=', 2).orWhere('id', '=', 3);
 			})
 			.orderBy('title', 'asc')
-			.get(['id', 'title'], function ( result )
+			.get(['id', 'title'], function (result)
 			{
 				expect(result).toEqual([{id: 2, title: 'Test market 2'}, {id: 3, title: 'Test market 3'}]);
 
@@ -278,11 +322,109 @@ describe("Queries", function ()
 			});
 	});
 
+	it("nested wheres combined with where", function (done)
+	{
+		new Market()
+			.where('city_id', 1)
+			.whereNested(function (q)
+			{
+				return q.where('id', '=', 2).orWhere('id', '=', 3);
+			})
+			.orderBy('title', 'asc')
+			.get(['id', 'title'], function (result)
+			{
+				expect(result).toEqual([{id: 2, title: 'Test market 2'}]);
+
+				done();
+			});
+	});
+
+	it("joins with a table", function (done)
+	{
+		new Market()
+			.alias('m')
+			.join('cities AS c', 'c.id', '=', 'm.city_id')
+			.orderBy('m.title', 'asc')
+			.get(['m.*'], function (result)
+			{
+				expect(result).toEqual([
+					{id: 1, city_id: 1, title: 'Test market 1'},
+					{id: 2, city_id: 1, title: 'Test market 2'},
+					{id: 4, city_id: 1, title: 'Test market 4'}
+				]);
+
+				done();
+			});
+	});
+
+	it("updates a record", function (done)
+	{
+		new Market()
+			.where('id', 3)
+			.update({
+				title: 'Test market 3 (updated)'
+			}, function (result)
+			{
+				expect(result).toEqual(true);
+
+				done();
+			});
+	});
+
+	it("updates non-existing record", function (done)
+	{
+		new Market()
+			.where('id', 6)
+			.update({
+				title: 'Does not exist'
+			}, function (result)
+			{
+				expect(result).toEqual(false);
+
+				done();
+			});
+	});
+
+	/*it("delete from a table", function (done)
+	{
+		new Market()
+			.where('id', 3)
+			.remove(function (result)
+			{
+				expect(result).toEqual([]);
+
+				new Market().all(function (result)
+				{
+					expect(result).toEqual([
+						{id: 1, city_id: 1, title: 'Test market 1'},
+						{id: 2, city_id: 1, title: 'Test market 2'},
+						{id: 4, city_id: 1, title: 'Test market 4'}
+					]);
+
+					done();
+				});
+			});
+	});
+
+	it("empty a table", function (done)
+	{
+		new Market()
+			.empty(function (result)
+			{
+				expect(result).toEqual([]);
+
+				new Market().all(function (result)
+				{
+					expect(result).toEqual([]);
+
+					done();
+				});
+			});
+	});*/
+
 	/*
 	 TODO: Things to test
 	 - updates
-	 - join
-	 - delete
 	 - relations
 	 */
 });

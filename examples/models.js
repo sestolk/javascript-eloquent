@@ -1,64 +1,69 @@
+"use strict";
+
+class Base extends Eloquent {
+	constructor()
+	{
+		super();
+
+		this.setDatabase();
+	}
+}
+
 /**
  * Market model
  *
- * @returns {MarketModel}
+ * @returns {Market}
  *
  * @constructor
  */
-var MarketModel = function ()
-{
-	Eloquent.call(this);
-
-	var _this = this;
-
-	// Set the table name
-	this.table = 'markets';
-
-	this.createModel = function(callback)
+class Market extends Base {
+	constructor()
 	{
-		return _this
-			.createColumn('id', 'INTEGER', true, true)
-			.createColumn('city_id', 'INTEGER', false)
-			.createColumn('title', 'TEXT', true)
-			.createTable(callback);
-	};
+		super();
+
+		this.table = 'markets';
+	}
+
+	createModel(cb)
+	{
+		this.column(new QueryColumn().integer('id').autoincrement());
+		this.column(new QueryColumn().integer('city_id'));
+		this.column(new QueryColumn().text('title').nullable());
+
+		this.create(cb);
+	}
 
 	/**
 	 * Market belongsTo one city
 	 *
 	 * @returns {Eloquent}
 	 */
-	this.city = function ()
+	city()
 	{
-		return _this.belongsTo('CityModel', 'city_id', 'id', arguments);
-	};
-
-	return this;
-};
+		return this.belongsTo('CityModel', 'city_id', 'id', arguments);
+	}
+}
 
 /**
  * City model
  *
- * @returns {CityModel}
+ * @returns {City}
  *
  * @constructor
  */
-var CityModel = function ()
-{
-	Eloquent.call(this);
-
-	var _this = this;
-
-	// Set the table name
-	this.table = 'cities';
-
-	this.createModel = function(callback)
+class City extends Base {
+	constructor()
 	{
-		return _this
-			.createColumn('id', 'INTEGER', true, true)
-			.createColumn('title', 'TEXT', true)
-			.createTable(callback);
-	};
+		super();
 
-	return this;
-};
+		this.table = 'cities';
+	}
+
+	createModel(cb)
+	{
+		this.column(new QueryColumn().integer('id').autoincrement());
+		this.column(new QueryColumn().text('title').nullable());
+
+		this.create(cb);
+	}
+}
